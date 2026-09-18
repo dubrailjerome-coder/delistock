@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🍰 DeliStock</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#1A5FA8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DeliStock">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F8F6F1;--bg2:#fff;--bg3:#F2EFE9;
+  --text:#1A1814;--text2:#6B6560;--text3:#9E9891;
+  --border:#E4E0D8;--blue:#1A5FA8;--blue-bg:#EBF2FB;
+  --green:#2E7D32;--green-bg:#EDF7EE;
+  --amber:#B45309;--amber-bg:#FEF3E2;
+  --red:#C0392B;--red-bg:#FDECEA;
+  --r:12px;--rl:16px;
+  --nav-h:64px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh;padding-bottom:var(--nav-h)}
+
+/* ── TOPBAR ── */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;height:56px}
+.topbar-logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700}
+.topbar-logo span{font-size:13px;color:var(--text3);font-weight:400}
+.topbar-actions{display:flex;gap:8px}
+.content{padding:72px 0 80px}
+
+/* ── BOTTOM NAV ── */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border);display:flex;height:var(--nav-h);padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;padding:6px 2px;transition:color .15s;border:none;background:transparent}
+.nav-item.active{color:var(--blue)}
+.nav-item svg{width:22px;height:22px}
+.nav-badge{background:var(--red);color:#fff;font-size:9px;border-radius:10px;padding:1px 5px;font-weight:700;position:absolute;top:6px;right:calc(50% - 18px)}
+.nav-item-wrap{position:relative}
+
+/* ── PAGES ── */
+.page{display:none;padding:0 14px}.page.active{display:block}
+
+/* ── SECTION TITLE ── */
+.section-title{font-size:20px;font-weight:700;padding:16px 0 12px}
+.section-sub{font-size:13px;color:var(--text2);margin-bottom:12px}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+.stat-val{font-size:28px;font-weight:700}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.stat-danger .stat-val{color:var(--red)}.stat-warn .stat-val{color:var(--amber)}
+.stat-ok .stat-val{color:var(--green)}.stat-info .stat-val{color:var(--blue)}
+
+/* ── ALERT BANNERS ── */
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--r);margin-bottom:10px;font-size:13px;line-height:1.5}
+.alert-danger{background:var(--red-bg);border:1px solid #F5C6C2;color:var(--red)}
+.alert-warn{background:var(--amber-bg);border:1px solid #FDDBA0;color:var(--amber)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:10px;overflow:hidden}
+.card-header{padding:12px 14px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.card-body{padding:0}
+.card-row{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
+.card-row:last-child{border-bottom:none}
+.card-row-main{flex:1;min-width:0}
+.card-row-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-row-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.card-row-right{text-align:right;flex-shrink:0}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--green-bg);color:var(--green)}
+.b-warn{background:var(--amber-bg);color:var(--amber)}
+.b-danger{background:var(--red-bg);color:var(--red)}
+.b-info{background:var(--blue-bg);color:var(--blue)}
+.b-gray{background:var(--bg3);color:var(--text2)}
+
+/* ── STOCK BAR ── */
+.stock-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:5px}
+.stock-fill{height:100%;border-radius:3px}
+.sf-ok{background:var(--green)}.sf-warn{background:#F59E0B}.sf-danger{background:var(--red)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;font-size:14px;border-radius:var(--r);border:1px solid var(--border);background:var(--bg2);color:var(--text);cursor:pointer;font-family:inherit;font-weight:500;transition:all .12s;white-space:nowrap}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-block{width:100%;margin-bottom:8px}
+.btn:disabled{opacity:.4}
+.btn-sm{padding:7px 12px;font-size:13px}
+.fab{position:fixed;bottom:calc(var(--nav-h) + 16px);right:16px;width:52px;height:52px;border-radius:50%;background:var(--blue);color:#fff;border:none;font-size:24px;cursor:pointer;box-shadow:0 4px 16px rgba(26,95,168,.4);display:flex;align-items:center;justify-content:center;z-index:90}
+
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--r);font-size:15px;background:var(--bg2);color:var(--text);font-family:inherit;-webkit-appearance:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--blue)}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-group textarea{min-height:70px;resize:vertical}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border-radius:var(--rl) var(--rl) 0 0;width:100%;max-height:90vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.modal-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:17px;font-weight:700}
+.modal-body{padding:16px}
+.modal-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px}
+
+/* ── RECIPE CARDS ── */
+.recipe-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:12px}
+.recipe-emoji{font-size:32px;margin-bottom:8px}
+.recipe-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.recipe-sub{font-size:13px;color:var(--text2);margin-bottom:10px}
+.recipe-actions{display:flex;gap:8px;margin-top:12px}
+
+/* ── ICON BTN ── */
+.icon-btn{background:transparent;border:1px solid var(--border);border-radius:var(--r);padding:8px;cursor:pointer;color:var(--text2);font-size:18px;display:inline-flex;align-items:center}
+
+/* ── SEARCH ── */
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:12px}
+.search-wrap input{border:none;background:transparent;font-size:15px;color:var(--text);outline:none;width:100%;font-family:inherit}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(var(--nav-h) + 12px);left:16px;right:16px;background:#1A1814;color:#fff;padding:14px 16px;border-radius:var(--r);font-size:14px;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;text-align:center}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── DLC ── */
+.dlc-danger{color:var(--red);font-weight:600}
+.dlc-warn{color:var(--amber);font-weight:600}
+
+/* ── CHART ── */
+.chart-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.chart-bar-label{font-size:12px;color:var(--text2);width:110px;text-align:right;flex-shrink:0}
+.chart-bar-wrap{flex:1;background:var(--bg3);border-radius:3px;height:22px;overflow:hidden}
+.chart-bar-fill{height:100%;display:flex;align-items:center;padding:0 8px;font-size:11px;color:#fff;font-weight:600;border-radius:3px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo">🍰 <div><div>DeliStock</div><span>Matières premières</span></div></div>
+  <div class="topbar-actions">
+    <button class="btn btn-primary btn-sm" onclick="showPage('achats')">+ Achat</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="page-dashboard" class="page active">
+  <div class="section-title">Tableau de bord</div>
+  <div class="stats-grid">
+    <div class="stat-card stat-info"><div class="stat-label">Ingrédients</div><div class="stat-val" id="d-total">–</div><div class="stat-sub">en stock</div></div>
+    <div class="stat-card stat-danger"><div class="stat-label">Critiques</div><div class="stat-val" id="d-crit">–</div><div class="stat-sub">sous le min.</div></div>
+    <div class="stat-card stat-warn"><div class="stat-label">DLC proches</div><div class="stat-val" id="d-dlc">–</div><div class="stat-sub">< 30 jours</div></div>
+    <div class="stat-card stat-ok"><div class="stat-label">Valeur stock</div><div class="stat-val" id="d-val">–</div><div class="stat-sub">prix achat</div></div>
+  </div>
+  <div id="d-alerts"></div>
+  <div class="card">
+    <div class="card-header">⚠️ Stocks critiques</div>
+    <div class="card-body" id="d-stocks-crit"></div>
+  </div>
+  <div class="card">
+    <div class="card-header">🛒 Derniers achats</div>
+    <div class="card-body" id="d-last-achats"></div>
+  </div>
+</div>
+
+<!-- ═══ STOCK ═══ -->
+<div id="page-stock" class="page">
+  <div class="section-title">Gestion du stock</div>
+  <div class="search-wrap">🔍 <input type="text" placeholder="Rechercher un ingrédient..." oninput="filterStock(this.value)" id="stock-search"></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+    <button class="btn btn-sm" onclick="filterByStatus('')" id="f-all" style="background:var(--blue);color:#fff;border-color:var(--blue)">Tous</button>
+    <button class="btn btn-sm" onclick="filterByStatus('critique')" id="f-crit">Critiques</button>
+    <button class="btn btn-sm" onclick="filterByStatus('faible')" id="f-low">Faibles</button>
+    <button class="btn btn-sm" onclick="filterByStatus('ok')" id="f-ok">OK</button>
+  </div>
+  <div id="stock-list"></div>
+  <div style="height:70px"></div>
+</div>
+
+<!-- ═══ ACHATS ═══ -->
+<div id="page-achats" class="page">
+  <div class="section-title">Enregistrer un achat</div>
+  <div class="card" style="padding:16px">
+    <div class="form-group"><label>Ingrédient *</label><select id="a-ingredient"><option value="">Choisir...</option></select></div>
+    <div class="form-group"><label>Fournisseur</label><select id="a-fournisseur"><option value="">Choisir...</option></select></div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Quantité *</label><input type="number" id="a-qte" placeholder="ex: 1000" min="0" step="0.01" inputmode="decimal"></div>
+      <div class="form-group"><label>Prix/unité (€) *</label><input type="number" id="a-prix" placeholder="ex: 34.00" min="0" step="0.01" inputmode="decimal"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Date achat *</label><input type="date" id="a-date"></div>
+      <div class="form-group"><label>DLC</label><input type="date" id="a-dlc"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>N° lot</label><input type="text" id="a-lot" placeholder="PV-2026-11"></div>
+      <div class="form-group"><label>Réf. facture</label><input type="text" id="a-facture" placeholder="FAC-001"></div>
+    </div>
+    <div id="a-preview" style="display:none;background:var(--blue-bg);border:1px solid #C5D9F2;border-radius:var(--r);padding:12px;font-size:14px;color:var(--blue);margin-bottom:12px;text-align:center"></div>
+    <button class="btn btn-primary btn-block" onclick="enregistrerAchat()">✅ Enregistrer l'achat</button>
+  </div>
+</div>
+
+<!-- ═══ RECETTES ═══ -->
+<div id="page-recettes" class="page">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px">
+    <div class="section-title" style="padding:0">Recettes</div>
+    <button class="btn btn-primary btn-sm" onclick="openModal('modal-recette')">+ Nouvelle</button>
+  </div>
+  <div id="recettes-list"></div>
+</div>
+
+<!-- ═══ PLUS ═══ -->
+<div id="page-plus" class="page">
+  <div class="section-title">Plus</div>
+
+  <!-- DLC -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header" onclick="toggleSection('dlc-body')">📅 DLC & Péremptions <span id="dlc-arrow">▼</span></div>
+    <div id="dlc-body" class="card-body"></div>
+  </div>
+
+  <!-- Historique -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header" onclick="toggleSection('hist-body')">🕐 Historique achats <span id="hist-arrow">▼</span></div>
+    <div id="hist-body" style="display:none" class="card-body"></div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header" onclick="toggleSection('stats-body')">📈 Statistiques <span id="stats-arrow">▼</span></div>
+    <div id="stats-body" style="display:none;padding:14px" class="card-body"></div>
+  </div>
+
+  <!-- Fournisseurs -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header" onclick="toggleSection('fourn-body')">🏪 Fournisseurs <span id="fourn-arrow">▼</span></div>
+    <div id="fourn-body" style="display:none" class="card-body"></div>
+  </div>
+
+  <!-- Scanner -->
+  <div class="card" style="margin-bottom:14px;padding:16px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px">📷 Scanner un ticket</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Importez une photo de ticket ou facture — l'IA extrait automatiquement les produits, quantités et prix.</div>
+    <label for="ocr-file">
+      <div style="border:2px dashed var(--border);border-radius:var(--r);padding:20px;text-align:center;cursor:pointer">
+        <div style="font-size:36px;margin-bottom:6px">📷</div>
+        <div style="font-size:14px;font-weight:600">Appuyez pour importer</div>
+        <div style="font-size:12px;color:var(--text3)">JPEG, PNG</div>
+      </div>
+    </label>
+    <input type="file" id="ocr-file" accept="image/*" capture="environment" style="display:none" onchange="handleOCRFile(this)">
+    <div id="ocr-loading" style="display:none;text-align:center;padding:16px">
+      <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 8px"></div>
+      <div style="font-size:13px;color:var(--text2)">Analyse en cours…</div>
+    </div>
+    <div id="ocr-result-wrap" style="display:none;margin-top:12px"></div>
+  </div>
+
+  <!-- Ajouter fournisseur -->
+  <button class="btn btn-block" onclick="openModal('modal-fournisseur')">🏪 Ajouter un fournisseur</button>
+  <div style="height:20px"></div>
+</div>
+
+</div><!-- content -->
+
+<!-- FAB Ajouter ingrédient -->
+<button class="fab" id="fab-add" onclick="openModal('modal-ingredient')" title="Ajouter un ingrédient">+</button>
+
+<!-- BOTTOM NAV -->
+<nav class="nav-bottom">
+  <button class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Accueil
+  </button>
+  <div class="nav-item-wrap" style="flex:1;display:flex">
+    <button class="nav-item" id="nav-stock" onclick="showPage('stock',this)" style="flex:1">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+      Stock
+    </button>
+    <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+  </div>
+  <button class="nav-item" id="nav-achats" onclick="showPage('achats',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    Achat
+  </button>
+  <button class="nav-item" id="nav-recettes" onclick="showPage('recettes',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Recettes
+  </button>
+  <button class="nav-item" id="nav-plus" onclick="showPage('plus',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    Plus
+  </button>
+</nav>
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Modal Ingrédient -->
+<div class="modal-overlay" id="modal-ingredient">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <h3 id="modal-ing-title">Ajouter un ingrédient</h3>
+    <button class="icon-btn" onclick="closeModal('modal-ingredient')">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="ing-id">
+    <div class="form-group"><label>Nom *</label><input type="text" id="ing-nom" placeholder="ex: Chocolat Guanaja 70%"></div>
+    <div class="form-group"><label>Marque</label><input type="text" id="ing-marque" placeholder="ex: Valrhona"></div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Catégorie</label><select id="ing-cat"></select></div>
+      <div class="form-group"><label>Unité</label><select id="ing-unite"><option value="g">g</option><option value="kg">kg</option><option value="mL">mL</option><option value="L">L</option><option value="pcs">pièces</option></select></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Stock actuel</label><input type="number" id="ing-stock" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label>Seuil minimum</label><input type="number" id="ing-min" placeholder="0" inputmode="decimal"></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Prix (€/unité)</label><input type="number" id="ing-prix" placeholder="0.00" inputmode="decimal"></div>
+      <div class="form-group"><label>Fournisseur</label><select id="ing-fourn"></select></div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Emplacement</label><input type="text" id="ing-empl" placeholder="Étagère A1"></div>
+      <div class="form-group"><label>Conditionnement</label><input type="text" id="ing-cond" placeholder="Sac 1 kg"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="ing-notes" placeholder="Observations..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-danger btn-sm" id="btn-delete-ing" onclick="deleteIngredient()" style="display:none">🗑</button>
+    <div style="flex:1"></div>
+    <button class="btn btn-sm" onclick="closeModal('modal-ingredient')">Annuler</button>
+    <button class="btn btn-primary btn-sm" onclick="saveIngredient()">✅ Enregistrer</button>
+  </div>
+</div></div>
+
+<!-- Modal Fournisseur -->
+<div class="modal-overlay" id="modal-fournisseur">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <h3 id="modal-fourn-title">Ajouter un fournisseur</h3>
+    <button class="icon-btn" onclick="closeModal('modal-fournisseur')">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="fourn-id">
+    <div class="form-group"><label>Nom *</label><input type="text" id="fourn-nom"></div>
+    <div class="form-group"><label>Type</label><select id="fourn-type"><option value="magasin">Magasin</option><option value="grossiste">Grossiste</option><option value="site_internet">Site internet</option><option value="producteur">Producteur</option></select></div>
+    <div class="form-group"><label>Site web</label><input type="text" id="fourn-url" placeholder="https://..."></div>
+    <div class="form-group"><label>Adresse</label><input type="text" id="fourn-adresse"></div>
+    <div class="form-group"><label>Téléphone</label><input type="tel" id="fourn-tel"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="fourn-email"></div>
+    <div class="form-group"><label>Notes</label><textarea id="fourn-notes"></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-sm" onclick="closeModal('modal-fournisseur')">Annuler</button>
+    <button class="btn btn-primary btn-sm" onclick="saveFournisseur()">✅ Enregistrer</button>
+  </div>
+</div></div>
+
+<!-- Modal Recette -->
+<div class="modal-overlay" id="modal-recette">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-header"><h3>Nouvelle recette</h3><button class="icon-btn" onclick="closeModal('modal-recette')">✕</button></div>
+  <div class="modal-body">
+    <div class="form-group"><label>Nom *</label><input type="text" id="rec-nom"></div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Catégorie</label><input type="text" id="rec-cat" placeholder="Tartes, Entremets..."></div>
+      <div class="form-group"><label>Portions</label><input type="number" id="rec-port" value="8" min="1" inputmode="numeric"></div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="rec-desc" placeholder="Courte description..."></textarea></div>
+    <div style="font-weight:600;margin-bottom:8px">Ingrédients</div>
+    <div id="rec-ings"></div>
+    <button class="btn btn-sm btn-block" onclick="addRecetteIng()">+ Ajouter un ingrédient</button>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-sm" onclick="closeModal('modal-recette')">Annuler</button>
+    <button class="btn btn-primary btn-sm" onclick="saveRecette()">✅ Créer</button>
+  </div>
+</div></div>
+
+<!-- Modal Production -->
+<div class="modal-overlay" id="modal-production">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-header"><h3 id="prod-titre">Production</h3><button class="icon-btn" onclick="closeModal('modal-production')">✕</button></div>
+  <div class="modal-body">
+    <input type="hidden" id="prod-recette-id">
+    <div class="form-group"><label>Nombre de fois la recette</label><input type="number" id="prod-nb" value="1" min="1" inputmode="numeric"></div>
+    <div id="prod-list" style="margin-bottom:12px"></div>
+    <div class="form-group"><label>Notes</label><textarea id="prod-notes" placeholder="Pour commande..."></textarea></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-sm" onclick="closeModal('modal-production')">Annuler</button>
+    <button class="btn btn-success btn-sm" onclick="confirmerProduction()">✅ Confirmer</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allIngredients=[], allFournisseurs=[], allCategories=[], allHistorique=[], currentRecetteData=null;
+let ocrImageB64=null, ocrImageType=null, ocrResultData=null;
+
+const $=id=>document.getElementById(id);
+function toast(msg,ok=true){const t=$('toast');t.textContent=msg;t.className='toast show';t.style.background=ok?'#1A1814':'#C0392B';setTimeout(()=>t.className='toast',2800)}
+function openModal(id){$(id).classList.add('open')}
+function closeModal(id){$(id).classList.remove('open')}
+
+function showPage(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navEl = el || $('nav-'+id);
+  if(navEl) navEl.classList.add('active');
+  // FAB visible seulement sur stock
+  $('fab-add').style.display = id==='stock' ? 'flex' : 'none';
+  const loaders={stock:loadStock,recettes:loadRecettes,achats:initAchatForm,plus:loadPlus};
+  if(loaders[id]) loaders[id]();
+  window.scrollTo(0,0);
+}
+
+async function api(url,method='GET',body=null){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(url,opts);
+  return r.json();
+}
+
+function getStatus(stock,min){
+  if(stock<=0) return 'rupture';
+  if(stock<=min) return 'critique';
+  if(stock<=min*1.5) return 'faible';
+  return 'ok';
+}
+function statusBadge(s){
+  if(s==='ok') return '<span class="badge b-ok">OK</span>';
+  if(s==='faible') return '<span class="badge b-warn">Faible</span>';
+  return '<span class="badge b-danger">Critique</span>';
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+async function loadDashboard(){
+  const d=await api('/api/dashboard');
+  $('d-total').textContent=d.stats.total||0;
+  $('d-crit').textContent=d.stats.critiques||0;
+  $('d-dlc').textContent=d.alertes_dlc.length;
+  $('d-val').textContent=(d.stats.valeur||0).toFixed(0)+' €';
+  let html='';
+  if(d.stocks_critiques.length) html+=`<div class="alert alert-danger">🔴 <span><b>Critique :</b> ${d.stocks_critiques.map(i=>i.nom).join(', ')}</span></div>`;
+  if(d.alertes_dlc.length) html+=`<div class="alert alert-warn">🗓️ <span><b>DLC proche :</b> ${d.alertes_dlc.map(i=>`${i.nom} (${i.jours}j)`).join(', ')}</span></div>`;
+  $('d-alerts').innerHTML=html;
+  $('d-stocks-crit').innerHTML=d.stocks_critiques.length
+    ? d.stocks_critiques.map(i=>`<div class="card-row"><div class="card-row-main"><div class="card-row-title">${i.nom}</div><div class="card-row-sub">${i.stock_actuel}${i.unite} / min. ${i.stock_minimum}${i.unite}</div></div>${statusBadge('critique')}</div>`).join('')
+    : '<div class="card-row"><div style="color:var(--text3);font-size:13px">✅ Tous les stocks sont OK</div></div>';
+  $('d-last-achats').innerHTML=d.derniers_achats.map(a=>`<div class="card-row"><div class="card-row-main"><div class="card-row-title">${a.nom}</div><div class="card-row-sub">${a.date_achat} · ${a.fournisseur||'–'}</div></div><div class="card-row-right" style="font-weight:600">${(a.prix_total||0).toFixed(2)} €</div></div>`).join('');
+  const nb=(d.stocks_critiques.length||0)+(d.alertes_dlc.length||0);
+  const badge=$('alert-badge');
+  badge.textContent=nb; badge.style.display=nb>0?'':'none';
+}
+
+// ── STOCK ─────────────────────────────────────────────────
+async function loadStock(){
+  allIngredients=await api('/api/ingredients');
+  renderStock(allIngredients);
+}
+function renderStock(data){
+  $('stock-list').innerHTML=data.map(i=>{
+    const s=getStatus(i.stock_actuel,i.stock_minimum);
+    const pct=Math.min(100,Math.round(i.stock_actuel/Math.max(i.stock_minimum*3,1)*100));
+    const fc=s==='ok'?'sf-ok':s==='faible'?'sf-warn':'sf-danger';
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:16px">${i.nom}</div>
+            <div style="font-size:13px;color:var(--text2)">${i.marque||''} ${i.categorie?'· '+i.categorie:''}</div>
+          </div>
+          ${statusBadge(s)}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:22px;font-weight:700">${i.stock_actuel} <span style="font-size:14px;font-weight:400;color:var(--text2)">${i.unite}</span></div>
+          <div style="font-size:13px;color:var(--text2)">min. ${i.stock_minimum} ${i.unite}</div>
+        </div>
+        <div class="stock-bar"><div class="stock-fill ${fc}" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <div style="font-size:13px;color:var(--text2)">💰 ${i.prix_achat_actuel.toFixed(2)} €/u · 🏪 ${i.fournisseur_nom||'–'}</div>
+          <div style="display:flex;gap:6px">
+            <button class="icon-btn btn-sm" onclick="openEditIngredient(${i.id})">✏️</button>
+            <button class="icon-btn btn-sm" style="color:var(--red)" onclick="confirmDeleteIng(${i.id},'${i.nom.replace(/'/g,"\\'")}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('')||'<div style="text-align:center;padding:30px;color:var(--text3)">Aucun ingrédient trouvé</div>';
+}
+function filterStock(v){renderStock(allIngredients.filter(i=>i.nom.toLowerCase().includes(v.toLowerCase())||(i.marque||'').toLowerCase().includes(v.toLowerCase())))}
+function filterByStatus(v){
+  ['f-all','f-crit','f-low','f-ok'].forEach(id=>{const b=$(id);if(b){b.style.background='';b.style.color='';b.style.borderColor=''}});
+  const map={'':'f-all','critique':'f-crit','faible':'f-low','ok':'f-ok'};
+  const btn=$(map[v]);
+  if(btn){btn.style.background='var(--blue)';btn.style.color='#fff';btn.style.borderColor='var(--blue)'}
+  renderStock(v?allIngredients.filter(i=>getStatus(i.stock_actuel,i.stock_minimum)===v):allIngredients);
+}
+
+// ── INGREDIENT MODAL ──────────────────────────────────────
+async function loadSelectData(){
+  allCategories=await api('/api/categories');
+  allFournisseurs=await api('/api/fournisseurs');
+  $('ing-cat').innerHTML='<option value="">–</option>'+allCategories.map(c=>`<option value="${c.id}">${c.nom}</option>`).join('');
+  $('ing-fourn').innerHTML='<option value="">–</option>'+allFournisseurs.map(f=>`<option value="${f.id}">${f.nom}</option>`).join('');
+}
+async function openEditIngredient(id){
+  await loadSelectData();
+  const ing=allIngredients.find(i=>i.id===id);
+  if(!ing) return;
+  $('modal-ingredient').classList.add('open');
+  $('modal-ing-title').textContent='Modifier';
+  $('ing-id').value=ing.id;
+  $('ing-nom').value=ing.nom||'';
+  $('ing-marque').value=ing.marque||'';
+  $('ing-cat').value=ing.categorie_id||'';
+  $('ing-unite').value=ing.unite||'g';
+  $('ing-stock').value=ing.stock_actuel;
+  $('ing-min').value=ing.stock_minimum;
+  $('ing-prix').value=ing.prix_achat_actuel;
+  $('ing-fourn').value=ing.fournisseur_habituel_id||'';
+  $('ing-empl').value=ing.emplacement||'';
+  $('ing-cond').value=ing.conditionnement||'';
+  $('ing-notes').value=ing.notes||'';
+  $('btn-delete-ing').style.display='inline-flex';
+}
+async function saveIngredient(){
+  const id=$('ing-id').value;
+  const nom=$('ing-nom').value.trim();
+  if(!nom){toast('Le nom est requis',false);return}
+  const data={nom,marque:$('ing-marque').value,categorie_id:$('ing-cat').value||null,unite:$('ing-unite').value,stock_actuel:parseFloat($('ing-stock').value)||0,stock_minimum:parseFloat($('ing-min').value)||0,prix_achat_actuel:parseFloat($('ing-prix').value)||0,fournisseur_habituel_id:$('ing-fourn').value||null,emplacement:$('ing-empl').value,conditionnement:$('ing-cond').value,notes:$('ing-notes').value};
+  const r=id?await api(`/api/ingredients/${id}`,'PUT',data):await api('/api/ingredients','POST',data);
+  if(r.ok){toast(id?'✅ Modifié':'✅ Ajouté');closeModal('modal-ingredient');$('ing-id').value='';$('btn-delete-ing').style.display='none';loadStock();loadDashboard();}
+  else toast('Erreur',false);
+}
+let deleteIngId=null;
+function deleteIngredient(){
+  deleteIngId=$('ing-id').value;
+  if(!deleteIngId) return;
+  if(confirm('Supprimer cet ingrédient ?')) confirmDeleteIng(deleteIngId,'');
+}
+async function confirmDeleteIng(id,nom){
+  if(nom && !confirm(`Supprimer "${nom}" ?`)) return;
+  const r=await api(`/api/ingredients/${id}`,'DELETE');
+  if(r.ok){toast('🗑 Supprimé');closeModal('modal-ingredient');$('ing-id').value='';loadStock();loadDashboard();}
+}
+
+// ── ACHAT ─────────────────────────────────────────────────
+async function initAchatForm(){
+  allIngredients=await api('/api/ingredients');
+  allFournisseurs=await api('/api/fournisseurs');
+  $('a-ingredient').innerHTML='<option value="">Choisir un ingrédient...</option>'+allIngredients.map(i=>`<option value="${i.id}">${i.nom}${i.marque?' – '+i.marque:''}</option>`).join('');
+  $('a-fournisseur').innerHTML='<option value="">Choisir un fournisseur...</option>'+allFournisseurs.map(f=>`<option value="${f.id}">${f.nom}</option>`).join('');
+  $('a-date').value=new Date().toISOString().split('T')[0];
+  ['a-ingredient','a-qte','a-prix'].forEach(id=>$(id).addEventListener('input',updateAchatPreview));
+}
+function updateAchatPreview(){
+  const qte=parseFloat($('a-qte').value)||0, prix=parseFloat($('a-prix').value)||0;
+  if(qte&&prix){$('a-preview').style.display='';$('a-preview').innerHTML=`💰 Total : <strong>${(qte*prix).toFixed(2)} €</strong>`;}
+  else $('a-preview').style.display='none';
+}
+async function enregistrerAchat(){
+  const iid=$('a-ingredient').value, qte=parseFloat($('a-qte').value), prix=parseFloat($('a-prix').value), date=$('a-date').value;
+  if(!iid||!qte||!prix||!date){toast('Remplissez les champs obligatoires (*)',false);return}
+  const r=await api('/api/lots','POST',{ingredient_id:iid,fournisseur_id:$('a-fournisseur').value||null,quantite_achetee:qte,prix_unitaire:prix,date_achat:date,date_peremption:$('a-dlc').value||null,numero_lot:$('a-lot').value,facture_ref:$('a-facture').value,notes:''});
+  if(r.ok){toast('✅ Achat enregistré !');['a-ingredient','a-fournisseur','a-qte','a-prix','a-lot','a-facture'].forEach(id=>$(id).value='');$('a-dlc').value='';$('a-preview').style.display='none';loadDashboard();}
+  else toast('Erreur',false);
+}
+
+// ── RECETTES ─────────────────────────────────────────────
+async function loadRecettes(){
+  const data=await api('/api/recettes');
+  const emojis={'Tartes':'🥧','Entremets':'🎂','Macarons':'🍪','Petits fours':'🌿','Viennoiseries':'🥐'};
+  $('recettes-list').innerHTML=data.map(r=>{
+    const ok=r.stock_ok;
+    const emoji=emojis[r.categorie]||'🍰';
+    return `<div class="recipe-card">
+      <div class="recipe-emoji">${emoji}</div>
+      <div class="recipe-title">${r.nom}</div>
+      <div class="recipe-sub">${r.nb_portions} portions · ${r.categorie||''} · ${r.cout_total.toFixed(2)} € matière</div>
+      <span class="badge ${ok?'b-ok':'b-danger'}">${ok?'Stock OK':'Stock insuffisant'}</span>
+      <div class="recipe-actions">
+        <button class="btn btn-success" style="flex:1" ${ok?'':'disabled'} onclick="ouvrirProduction(${JSON.stringify(r).replace(/"/g,'&quot;')})">▶ Produire</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecette(${r.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('')||'<div style="text-align:center;padding:30px;color:var(--text3)">Aucune recette</div>';
+}
+function ouvrirProduction(rec){
+  currentRecetteData=rec;
+  $('prod-titre').textContent=rec.nom;
+  $('prod-recette-id').value=rec.id;
+  $('prod-nb').value=1;
+  updateProdList();
+  openModal('modal-production');
+}
+function updateProdList(){
+  if(!currentRecetteData) return;
+  const nb=parseFloat($('prod-nb').value)||1;
+  $('prod-list').innerHTML=currentRecetteData.ingredients.map(ing=>{
+    const besoin=ing.quantite*nb, apres=ing.stock_actuel-besoin, ok=apres>=0;
+    return `<div class="card-row">
+      <div class="card-row-main"><div class="card-row-title">${ing.ingredient_nom}</div><div class="card-row-sub">−${besoin.toFixed(0)} ${ing.unite} → ${apres.toFixed(0)} ${ing.unite}</div></div>
+      <span class="badge ${ok?'b-ok':'b-danger'}">${ok?'OK':'⚠'}</span>
+    </div>`;
+  }).join('');
+}
+async function confirmerProduction(){
+  const rid=$('prod-recette-id').value, nb=parseFloat($('prod-nb').value)||1;
+  const r=await api('/api/productions','POST',{recette_id:rid,nb_lots:nb,notes:$('prod-notes').value});
+  if(r.ok){toast(`✅ Production ! Coût: ${r.cout.toFixed(2)} €`);closeModal('modal-production');loadRecettes();loadDashboard();}
+  else toast(r.erreur||'Erreur',false);
+}
+async function addRecetteIng(){
+  if(!allIngredients.length) allIngredients=await api('/api/ingredients');
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center';
+  div.innerHTML=`<select style="flex:2;padding:10px;border:1px solid var(--border);border-radius:var(--r);font-size:14px;font-family:inherit"><option value="">Ingrédient...</option>${allIngredients.map(i=>`<option value="${i.id}">${i.nom}</option>`).join('')}</select>
+  <input type="number" placeholder="Qté" min="0" step="0.01" inputmode="decimal" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--r);font-size:14px;font-family:inherit">
+  <select style="padding:10px;border:1px solid var(--border);border-radius:var(--r);font-size:14px;font-family:inherit"><option>g</option><option>kg</option><option>pcs</option></select>
+  <button type="button" onclick="this.parentElement.remove()" style="padding:10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);cursor:pointer">✕</button>`;
+  $('rec-ings').appendChild(div);
+}
+async function saveRecette(){
+  const nom=$('rec-nom').value.trim();
+  if(!nom){toast('Le nom est requis',false);return}
+  const ings=[];
+  document.querySelectorAll('#rec-ings>div').forEach(row=>{
+    const sel=row.querySelector('select'), qte=row.querySelector('input'), unite=row.querySelectorAll('select')[1];
+    if(sel&&sel.value&&qte&&qte.value) ings.push({ingredient_id:sel.value,quantite:parseFloat(qte.value),unite:unite?unite.value:'g'});
+  });
+  const r=await api('/api/recettes','POST',{nom,description:$('rec-desc').value,nb_portions:parseInt($('rec-port').value)||1,categorie:$('rec-cat').value,ingredients:ings});
+  if(r.ok){toast('✅ Recette créée !');closeModal('modal-recette');loadRecettes();}
+  else toast('Erreur',false);
+}
+async function deleteRecette(id){
+  if(!confirm('Supprimer cette recette ?')) return;
+  const r=await api(`/api/recettes/${id}`,'DELETE');
+  if(r.ok){toast('🗑 Supprimée');loadRecettes();}
+}
+
+// ── PLUS PAGE ─────────────────────────────────────────────
+let plusLoaded={dlc:false,hist:false,stats:false,fourn:false};
+async function loadPlus(){
+  loadDLC();
+}
+
+function toggleSection(id){
+  const el=$(id);
+  const shown=el.style.display!=='none';
+  el.style.display=shown?'none':'block';
+  const arrow=$(id.replace('-body','-arrow'));
+  if(arrow) arrow.textContent=shown?'▼':'▲';
+  if(!shown){
+    if(id==='hist-body'&&!plusLoaded.hist){loadHistorique();plusLoaded.hist=true;}
+    if(id==='stats-body'&&!plusLoaded.stats){loadStats();plusLoaded.stats=true;}
+    if(id==='fourn-body'&&!plusLoaded.fourn){loadFournisseurs();plusLoaded.fourn=true;}
+  }
+}
+
+async function loadDLC(){
+  const data=await api('/api/dlc');
+  const urgents=data.filter(l=>l.jours_restants<=7).length;
+  let html='';
+  if(urgents) html+=`<div class="alert alert-danger" style="margin:12px">🔴 <strong>${urgents} lot(s)</strong> expirent dans moins de 7 jours !</div>`;
+  html+=data.map(l=>{
+    const j=l.jours_restants;
+    const cls=j<0?'dlc-danger':j<=7?'dlc-danger':j<=30?'dlc-warn':'';
+    const badge=j<0?'b-danger':j<=7?'b-danger':j<=30?'b-warn':'b-ok';
+    const jStr=j<0?`Expiré (${Math.abs(j)}j)`:j===0?"Aujourd'hui":`${j} jours`;
+    return `<div class="card-row">
+      <div class="card-row-main">
+        <div class="card-row-title">${l.ingredient_nom}</div>
+        <div class="card-row-sub">${l.numero_lot||'–'} · ${l.quantite_restante} ${l.unite}</div>
+        <div class="card-row-sub ${cls}">${l.date_peremption}</div>
+      </div>
+      <span class="badge ${badge}">${jStr}</span>
+    </div>`;
+  }).join('');
+  $('dlc-body').innerHTML=html||'<div class="card-row" style="color:var(--text3);font-size:13px">Aucune DLC à surveiller</div>';
+}
+
+async function loadHistorique(){
+  const data=await api('/api/historique');
+  $('hist-body').innerHTML=data.map(l=>`<div class="card-row">
+    <div class="card-row-main">
+      <div class="card-row-title">${l.ingredient_nom}</div>
+      <div class="card-row-sub">${l.date_achat} · ${l.quantite_achetee} ${l.unite} · ${l.fournisseur_nom||'–'}</div>
+    </div>
+    <div class="card-row-right" style="font-weight:600">${(l.prix_total||0).toFixed(2)} €</div>
+  </div>`).join('');
+}
+
+async function loadStats(){
+  const data=await api('/api/stats/general');
+  const maxV=Math.max(...data.par_categorie.map(c=>c.valeur||0),1);
+  const maxF=Math.max(...data.par_fournisseur.map(f=>f.total||0),1);
+  $('stats-body').innerHTML=
+    '<div style="font-weight:600;margin-bottom:10px">💰 Par catégorie</div>'+
+    data.par_categorie.map(c=>`<div class="chart-bar-row"><div class="chart-bar-label">${c.categorie}</div><div class="chart-bar-wrap"><div class="chart-bar-fill" style="width:${Math.round((c.valeur||0)/maxV*100)}%;background:${c.couleur||'var(--blue)'}">${(c.valeur||0).toFixed(0)} €</div></div></div>`).join('')+
+    '<div style="font-weight:600;margin:14px 0 10px">🏪 Par fournisseur</div>'+
+    data.par_fournisseur.map(f=>`<div class="chart-bar-row"><div class="chart-bar-label">${f.nom}</div><div class="chart-bar-wrap"><div class="chart-bar-fill" style="width:${Math.round((f.total||0)/maxF*100)}%;background:var(--blue)">${(f.total||0).toFixed(0)} €</div></div></div>`).join('');
+}
+
+async function loadFournisseurs(){
+  allFournisseurs=await api('/api/fournisseurs');
+  const icons={site_internet:'🌐',grossiste:'🏭',magasin:'🏪',producteur:'🌾'};
+  $('fourn-body').innerHTML=allFournisseurs.map(f=>`<div class="card-row">
+    <div style="font-size:24px;margin-right:4px">${icons[f.type]||'🏪'}</div>
+    <div class="card-row-main">
+      <div class="card-row-title">${f.nom}</div>
+      <div class="card-row-sub">${f.nb_ingredients||0} ingr. · ${(f.total_achats||0).toFixed(2)} €</div>
+    </div>
+    <button class="icon-btn btn-sm" onclick="openEditFourn(${f.id})">✏️</button>
+  </div>`).join('')+
+  '<div style="padding:12px"><button class="btn btn-block" onclick="openModal(\'modal-fournisseur\')">+ Ajouter un fournisseur</button></div>';
+}
+
+// ── FOURNISSEUR MODAL ────────────────────────────────────
+async function openEditFourn(id){
+  const f=allFournisseurs.find(f=>f.id===id);
+  if(!f) return;
+  $('modal-fournisseur').classList.add('open');
+  $('modal-fourn-title').textContent='Modifier : '+f.nom;
+  $('fourn-id').value=f.id;
+  $('fourn-nom').value=f.nom||'';
+  $('fourn-type').value=f.type||'magasin';
+  $('fourn-url').value=f.url||'';
+  $('fourn-adresse').value=f.adresse||'';
+  $('fourn-tel').value=f.telephone||'';
+  $('fourn-email').value=f.email||'';
+  $('fourn-notes').value=f.notes||'';
+}
+async function saveFournisseur(){
+  const id=$('fourn-id').value;
+  const nom=$('fourn-nom').value.trim();
+  if(!nom){toast('Le nom est requis',false);return}
+  const data={nom,type:$('fourn-type').value,url:$('fourn-url').value,adresse:$('fourn-adresse').value,telephone:$('fourn-tel').value,email:$('fourn-email').value,notes:$('fourn-notes').value};
+  const r=id?await api(`/api/fournisseurs/${id}`,'PUT',data):await api('/api/fournisseurs','POST',data);
+  if(r.ok){toast(id?'✅ Modifié':'✅ Ajouté');closeModal('modal-fournisseur');$('fourn-id').value='';$('modal-fourn-title').textContent='Ajouter un fournisseur';plusLoaded.fourn=false;}
+  else toast('Erreur',false);
+}
+
+// ── OCR ──────────────────────────────────────────────────
+function handleOCRFile(input){
+  const file=input.files[0]; if(!file) return;
+  ocrImageType=file.type||'image/jpeg';
+  const reader=new FileReader();
+  reader.onload=e=>{ocrImageB64=e.target.result.split(',')[1];lancerOCR();};
+  reader.readAsDataURL(file);
+}
+async function lancerOCR(){
+  $('ocr-loading').style.display='block';
+  $('ocr-result-wrap').style.display='none';
+  // Google Vision OCR
+  const r = await api('/api/ocr/google','POST',{image:ocrImageB64,type:ocrImageType});
+  $('ocr-loading').style.display='none';
+  if(!r.ok){
+    toast('❌ '+(r.erreur||'Erreur analyse'),false);
+    return;
+  }
+  ocrResultData=r.resultat;
+  toast('✅ Ticket analysé par Google Vision !');
+  afficherResultatOCR(r.resultat);
+}
+function afficherResultatOCR(res){
+  const lignes=res.lignes||[];
+  let html=`<div style="background:var(--green-bg);border:1px solid #A5D6A7;border-radius:var(--r);padding:12px;margin-bottom:12px">
+    <div style="font-weight:700;color:var(--green);margin-bottom:4px">✅ ${lignes.length} produits détectés</div>
+    <div style="font-size:13px;color:var(--green)">Fournisseur : ${res.fournisseur||'–'} · Date : ${res.date||'–'}</div>
+  </div>`;
+  html+=lignes.map((l,i)=>`<div class="card" style="margin-bottom:8px;padding:12px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div style="flex:1"><div style="font-weight:600">${l.nom_detecte}</div><div style="font-size:12px;color:var(--text2)">${l.correspond?'✓ '+l.nom_normalise:'⚠ Non reconnu'}</div></div>
+      <input type="checkbox" id="ocr-chk-${i}" checked style="width:20px;height:20px;margin-left:8px">
+    </div>
+    ${!l.correspond?`<div style="margin-bottom:8px"><select style="width:100%;padding:8px;border:1px solid var(--border);border-radius:var(--r);font-size:14px;font-family:inherit" onchange="ocrResultData.lignes[${i}].ingredient_id=this.value?parseInt(this.value):null"><option value="">Associer à un ingrédient...</option>${(allIngredients||[]).map(ing=>`<option value="${ing.id}">${ing.nom}</option>`).join('')}</select></div>`:''}
+    <div style="display:flex;gap:8px">
+      <div style="flex:1;font-size:13px;color:var(--text2)">Qté: <strong>${l.quantite} ${l.unite}</strong></div>
+      <div style="font-size:13px;color:var(--text2)">Prix: <strong>${l.prix_unitaire} €</strong></div>
+      <div style="font-size:13px;font-weight:600">${(l.prix_total_ligne||0).toFixed(2)} €</div>
+    </div>
+  </div>`).join('');
+  html+=`<button class="btn btn-success btn-block" onclick="confirmerOCR()">✅ Importer dans le stock</button>`;
+  $('ocr-result-wrap').innerHTML=html;
+  $('ocr-result-wrap').style.display='block';
+}
+async function confirmerOCR(){
+  if(!ocrResultData) return;
+  const lignes=ocrResultData.lignes.map((l,i)=>({...l,valide:$(`ocr-chk-${i}`)?$(`ocr-chk-${i}`).checked:true}));
+  const r=await api('/api/ocr/confirmer','POST',{lignes,fournisseur:ocrResultData.fournisseur,date:ocrResultData.date,reference_facture:ocrResultData.reference_facture});
+  if(r.ok){toast(`✅ ${r.nb_importes} ingrédients importés !`);$('ocr-result-wrap').style.display='none';$('ocr-file').value='';ocrResultData=null;loadDashboard();}
+  else toast(r.erreur||'Erreur',false);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  loadDashboard();
+  document.querySelectorAll('.modal-overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open')}));
+  document.addEventListener('input',e=>{if(e.target&&e.target.id==='prod-nb')updateProdList()});
+  $('fab-add').style.display='none';
+
+  // PWA Service Worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/static/sw.js').catch(e=>console.log('SW:',e));
+  }
+
+  // Bouton installation PWA
+  window.addEventListener('beforeinstallprompt',e=>{
+    e.preventDefault();
+    const btn=document.createElement('button');
+    btn.className='btn btn-sm';
+    btn.innerHTML='📲 Installer';
+    btn.style.cssText='background:#10B981;color:#fff;border-color:#10B981;animation:pulse 2s infinite';
+    btn.onclick=async()=>{e.prompt();const{outcome}=await e.userChoice;if(outcome==='accepted')btn.remove();};
+    document.querySelector('.topbar-actions').prepend(btn);
+  });
+
+  // Ouvrir modal avec sélecteurs chargés
+  window.openModal=async function(id){
+    if(id==='modal-ingredient'){
+      await loadSelectData();
+      if(!$('ing-id').value){
+        ['ing-nom','ing-marque','ing-stock','ing-min','ing-prix','ing-empl','ing-cond','ing-notes'].forEach(i=>$(i).value='');
+        $('modal-ing-title').textContent='Ajouter un ingrédient';
+        $('btn-delete-ing').style.display='none';
+      }
+    }
+    if(id==='modal-fournisseur'&&!$('fourn-id').value){
+      ['fourn-nom','fourn-url','fourn-adresse','fourn-tel','fourn-email','fourn-notes'].forEach(i=>$(i).value='');
+      $('modal-fourn-title').textContent='Ajouter un fournisseur';
+    }
+    if(id==='modal-recette') $('rec-ings').innerHTML='';
+    $(id).classList.add('open');
+  };
+});
+</script>
+</body>
+</html>

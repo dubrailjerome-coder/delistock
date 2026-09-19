@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🍰 DeliStock</title>
+<title>Les Délices de Jérôme</title>
 <link rel="manifest" href="/static/manifest.json">
 <meta name="theme-color" content="#1A5FA8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="DeliStock">
+<meta name="apple-mobile-web-app-title" content="Délices de Jérôme">
 <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -148,7 +148,36 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-logo">🍰 <div><div>DeliStock</div><span>Matières premières</span></div></div>
+  <div class="topbar-logo">
+  <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Assiette -->
+  <ellipse cx="18" cy="29" rx="14" ry="3" fill="#E8C97A" opacity="0.3"/>
+  <!-- Base gâteau -->
+  <rect x="6" y="22" width="24" height="7" rx="2" fill="#C9A96E"/>
+  <!-- Couche crème -->
+  <rect x="7" y="20" width="22" height="3" rx="1" fill="#F5E6C8"/>
+  <!-- Étage milieu -->
+  <rect x="8" y="13" width="20" height="8" rx="2" fill="#C9A96E"/>
+  <!-- Couche crème milieu -->
+  <rect x="9" y="11" width="18" height="3" rx="1" fill="#F5E6C8"/>
+  <!-- Étage haut -->
+  <rect x="11" y="6" width="14" height="6" rx="2" fill="#C9A96E"/>
+  <!-- Bougies -->
+  <rect x="14" y="2" width="2" height="5" rx="1" fill="#E8C97A"/>
+  <rect x="20" y="2" width="2" height="5" rx="1" fill="#E8C97A"/>
+  <!-- Flammes -->
+  <ellipse cx="15" cy="2" rx="1.5" ry="2" fill="#F59E0B" opacity="0.9"/>
+  <ellipse cx="21" cy="2" rx="1.5" ry="2" fill="#F59E0B" opacity="0.9"/>
+  <!-- Décoration -->
+  <circle cx="18" cy="9" r="1.5" fill="#F5E6C8"/>
+  <circle cx="12" cy="17" r="1" fill="#F5E6C8"/>
+  <circle cx="24" cy="17" r="1" fill="#F5E6C8"/>
+</svg>
+  <div style="margin-left:8px">
+    <div style="font-size:15px;font-weight:600;letter-spacing:-0.3px">Les Délices de Jérôme</div>
+    <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3)">Pâtisserie · Stock</span>
+  </div>
+</div>
   <div class="topbar-actions">
     <button class="btn btn-primary btn-sm" onclick="showPage('achats')">+ Achat</button>
   </div>
@@ -407,6 +436,98 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="modal-footer">
     <button class="btn btn-sm" onclick="closeModal('modal-production')">Annuler</button>
     <button class="btn btn-success btn-sm" onclick="confirmerProduction()">✅ Confirmer</button>
+  </div>
+</div></div>
+
+
+<!-- Modal Calculateur Prix de Vente -->
+<div class="modal-overlay" id="modal-calcul-prix">
+<div class="modal">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <h3>💰 Calculateur de prix de vente</h3>
+    <button class="icon-btn" onclick="closeModal('modal-calcul-prix')">✕</button>
+  </div>
+  <div class="modal-body">
+    <div id="calcul-recette-info" style="background:var(--bg3);border-radius:var(--r);padding:12px;margin-bottom:16px;font-size:13px"></div>
+    
+    <div style="font-weight:600;font-size:14px;margin-bottom:12px;color:var(--text2)">📦 Coûts de production</div>
+    
+    <div class="form-group">
+      <label>Coût ingrédients (calculé automatiquement)</label>
+      <div style="padding:10px 14px;background:var(--bg3);border-radius:var(--r);font-size:15px;font-weight:600;color:var(--blue)" id="calcul-cout-ing">0,00 €</div>
+    </div>
+    
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Temps de travail (heures)</label>
+        <input type="number" id="calcul-heures" value="2" min="0" step="0.5" inputmode="decimal" oninput="recalculerPrix()">
+      </div>
+      <div class="form-group">
+        <label>Taux horaire (€/h)</label>
+        <input type="number" id="calcul-taux" value="15" min="0" step="0.5" inputmode="decimal" oninput="recalculerPrix()">
+      </div>
+    </div>
+    
+    <div class="form-row-2">
+      <div class="form-group">
+        <label>Emballage & consommables (€)</label>
+        <input type="number" id="calcul-emballage" value="2" min="0" step="0.1" inputmode="decimal" oninput="recalculerPrix()">
+      </div>
+      <div class="form-group">
+        <label>Frais fixes % (énergie, loyer...)</label>
+        <input type="number" id="calcul-frais" value="10" min="0" max="100" step="1" inputmode="decimal" oninput="recalculerPrix()">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label>Marge bénéficiaire souhaitée (%)</label>
+      <input type="range" id="calcul-marge" value="40" min="10" max="200" step="5" oninput="recalculerPrix();document.getElementById('calcul-marge-val').textContent=this.value+'%'">
+      <div style="text-align:center;font-weight:600;color:var(--blue);font-size:16px;margin-top:4px" id="calcul-marge-val">40%</div>
+    </div>
+
+    <div style="background:var(--blue-bg);border:1px solid #C5D9F2;border-radius:var(--rl);padding:16px;margin-top:8px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:12px;color:var(--blue)">📊 Résultat</div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="calcul-resultat">
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text2)">Coût ingrédients</span>
+          <span id="r-ing">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text2)">Main d'œuvre</span>
+          <span id="r-mo">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text2)">Emballage</span>
+          <span id="r-emb">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px">
+          <span style="color:var(--text2)">Frais fixes</span>
+          <span id="r-frais">0,00 €</span>
+        </div>
+        <div style="border-top:1px solid #C5D9F2;padding-top:8px;display:flex;justify-content:space-between;font-size:13px;font-weight:600">
+          <span>Coût de revient</span>
+          <span id="r-revient">0,00 €</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--green)">
+          <span>Marge bénéficiaire</span>
+          <span id="r-marge-euro">0,00 €</span>
+        </div>
+        <div style="border-top:2px solid var(--blue);padding-top:10px;margin-top:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:700;font-size:15px;color:var(--blue)">Prix de vente conseillé</span>
+            <span style="font-weight:700;font-size:22px;color:var(--blue)" id="r-prix-vente">0,00 €</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font-size:12px;color:var(--text2)">Prix par portion</span>
+            <span style="font-size:15px;font-weight:600;color:var(--blue)" id="r-prix-portion">0,00 €</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" onclick="closeModal('modal-calcul-prix')">Fermer</button>
   </div>
 </div></div>
 
@@ -811,6 +932,57 @@ async function confirmerOCR(){
   const r=await api('/api/ocr/confirmer','POST',{lignes,fournisseur:ocrResultData.fournisseur,date:ocrResultData.date,reference_facture:ocrResultData.reference_facture});
   if(r.ok){toast(`✅ ${r.nb_importes} ingrédients importés !`);$('ocr-result-wrap').style.display='none';$('ocr-file').value='';ocrResultData=null;loadDashboard();}
   else toast(r.erreur||'Erreur',false);
+}
+
+
+// ── CALCULATEUR PRIX DE VENTE ─────────────────────────
+let calculRecetteData = null;
+
+function ouvrirCalculateur(rec) {
+  calculRecetteData = rec;
+  const cout = rec.cout_total || 0;
+  $('calcul-recette-info').innerHTML = `
+    <div style="font-weight:600;margin-bottom:4px">🎂 ${rec.nom}</div>
+    <div style="color:var(--text2)">${rec.nb_portions} portions · ${rec.ingredients ? rec.ingredients.length : 0} ingrédients</div>
+  `;
+  $('calcul-cout-ing').textContent = cout.toFixed(2) + ' €';
+  $('calcul-heures').value = 2;
+  $('calcul-taux').value = 15;
+  $('calcul-emballage').value = 2;
+  $('calcul-frais').value = 10;
+  $('calcul-marge').value = 40;
+  $('calcul-marge-val').textContent = '40%';
+  recalculerPrix();
+  openModal('modal-calcul-prix');
+}
+
+function recalculerPrix() {
+  if (!calculRecetteData) return;
+  const cout_ing = calculRecetteData.cout_total || 0;
+  const heures = parseFloat($('calcul-heures').value) || 0;
+  const taux = parseFloat($('calcul-taux').value) || 0;
+  const emballage = parseFloat($('calcul-emballage').value) || 0;
+  const frais_pct = parseFloat($('calcul-frais').value) || 0;
+  const marge_pct = parseFloat($('calcul-marge').value) || 0;
+  const nb_portions = calculRecetteData.nb_portions || 1;
+
+  const main_oeuvre = heures * taux;
+  const sous_total = cout_ing + main_oeuvre + emballage;
+  const frais = sous_total * frais_pct / 100;
+  const cout_revient = sous_total + frais;
+  const marge_euro = cout_revient * marge_pct / 100;
+  const prix_vente = cout_revient + marge_euro;
+  const prix_portion = prix_vente / nb_portions;
+
+  const fmt = v => v.toFixed(2).replace('.', ',') + ' €';
+  $('r-ing').textContent = fmt(cout_ing);
+  $('r-mo').textContent = fmt(main_oeuvre);
+  $('r-emb').textContent = fmt(emballage);
+  $('r-frais').textContent = fmt(frais);
+  $('r-revient').textContent = fmt(cout_revient);
+  $('r-marge-euro').textContent = fmt(marge_euro);
+  $('r-prix-vente').textContent = fmt(prix_vente);
+  $('r-prix-portion').textContent = fmt(prix_portion);
 }
 
 // ── INIT ─────────────────────────────────────────────────
